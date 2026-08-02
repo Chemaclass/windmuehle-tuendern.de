@@ -40,6 +40,11 @@ jobs:
         run: |
           zola build
 
+      # Pushes land on main directly, so build.yml never sees them. Without
+      # this the site can deploy with dead links and missing images.
+      - name: Check internal links and assets
+        run: python3 scripts/check-links.py
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

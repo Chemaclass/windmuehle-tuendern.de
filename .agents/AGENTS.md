@@ -20,8 +20,9 @@ Helper scripts (any agent can run these directly):
 - `./scripts/new-post.sh` / `./scripts/make-thumb.sh` — scaffold a post / optimize an image + thumbnail
 - `./scripts/new-tour.sh` — append a public/private tour slot (events are manual, see new-tour playbook)
 - `./scripts/validate-fuehrungen.py` — validate tour data (needs Python 3.11+)
+- `./scripts/check-links.py` — resolve every link and image in `public/` (run after `zola build`)
 
-Verify any change before committing: `./scripts/validate-fuehrungen.py`, `./scripts/check-i18n.py`, then `zola build` — the same gates CI runs on the pull request.
+Verify any change before committing: `./scripts/validate-fuehrungen.py`, `./scripts/check-i18n.py`, then `zola build` and `./scripts/check-links.py` — the same gates CI runs on the pull request and before every deploy. `zola build` alone stays green on dead links and missing images, so never skip the last one after touching templates, image paths or filenames.
 
 Claude-only extras: subagent role docs in `.agents/agents/*.md` (blog-post-creator, i18n-checker, seo-auditor).
 

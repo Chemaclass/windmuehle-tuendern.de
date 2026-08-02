@@ -35,3 +35,6 @@ jobs:
 
       - name: Build with Zola
         run: zola build
+
+      - name: Check internal links and assets
+        run: python scripts/check-links.py

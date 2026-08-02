@@ -12,12 +12,14 @@ Run `zola build` from the project root and report the result.
 1. `zola build`
 2. If it succeeds, report `Build passed` with the page count summary Zola prints (`Creating N pages and M sections`).
 3. If it fails, show the offending error lines, identify the file and line if Zola reports them, and suggest the fix.
+4. Then `./scripts/check-links.py`. Zola resolves no link and no image path, so a green build proves nothing about them. Report the broken targets it lists together with the pages referencing them.
 
 ## When to fail loudly
 
 - Tera template errors (missing keys, bad syntax, type mismatch).
 - Frontmatter parse errors.
 - Missing translation key referenced by `trans(key=..., lang=...)`.
-- Broken internal links or shortcodes.
+- Broken internal links or shortcodes (`check-links.py`, not `zola build`).
+- Image paths that no longer exist after a rename (`check-links.py`).
 
 If the error is opaque, re-run with `RUST_LOG=debug zola build 2>&1 | tail -50` for more context.
