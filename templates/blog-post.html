@@ -70,7 +70,10 @@
             {% if page.taxonomies.tags %}
             <ul class="tag-chip-list">
                 {% for t in page.taxonomies.tags %}
-                <li><a class="tag-chip" href="{{ m::lang_prefix(lang=lang) }}/tags/{{ t | slugify }}/">{{ t }}</a></li>
+                {# Taxonomy pages render under /tags/ for every language: the terms
+                   themselves differ per language (Spende / Donation / Donación), and
+                   Zola emits no /en/tags/ or /es/tags/ tree. No lang prefix here. #}
+                <li><a class="tag-chip" href="/tags/{{ t | slugify }}/">{{ t }}</a></li>
                 {% endfor %}
             </ul>
             {% endif %}
