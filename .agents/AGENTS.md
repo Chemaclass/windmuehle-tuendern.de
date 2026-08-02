@@ -58,7 +58,7 @@ Every content or translation change **must** cover all 3 languages.
 ## Blog Posts
 
 - Live in `content/aktuelles/` (de), `content/en/aktuelles/` (en), `content/es/aktuelles/` (es)
-- Filename `YYYY-MM-DD-slug.md`. Zola derives `page.date` from it, so no `date` field in frontmatter.
+- Filename `YYYY-MM-DD-slug.md`. Zola derives `page.date` from it, so no `date` field in frontmatter. One slug per post: recurring events carry the year (`pfingstmontag-2027`).
 - Frontmatter: `title`, `description`, `template = "blog-post.html"`, `[extra] image`
 - Images in `static/imgs/`, referenced absolute (`/imgs/...`). Galleries use `<div class="post-images">`.
 - Optimize post images to 1200px / 80% JPEG; thumbnails to 600px / 70% into `static/imgs/thumbs/<basename>.jpg`. Every `[extra] image` needs a matching thumbnail.

@@ -7,6 +7,9 @@ public/
 cache/
 node_modules/
 
+# Scratch area for unoptimized source photos before new-post.sh imports them.
+local/
+
 # Local Netlify folder
 .netlify
 

@@ -5,6 +5,9 @@
 # Safe to re-run: existing language files are left untouched; only missing
 # ones are created. Existing optimized images are reused when present.
 #
+# A slug belongs to exactly one post. Recurring events carry the year
+# (pfingstmontag-2027, weihnachten-2027); one-off news posts do not.
+#
 # Usage:
 #   ./scripts/new-post.sh <slug> [options]
 #
@@ -14,6 +17,10 @@
 #   -s, --summary <string>    Description for frontmatter (default: title)
 #   -D, --date <YYYY-MM-DD>   Post date (default: today)
 #   -h, --help                Show this help
+#
+# Passing -D for a slug that another post already owns is an error: that is
+# a new post and needs its own slug. Re-run without -D to enrich the
+# existing post instead.
 #
 # Example:
 #   ./scripts/new-post.sh fluegel-montage -t "Flügelmontage" -s "Die neuen Flügel wurden montiert."
@@ -29,9 +36,11 @@ SLUG=""
 TITLE=""
 SUMMARY=""
 DATE="$(date +%Y-%m-%d)"
+DATE_EXPLICIT=0
 
+# Print the header comment block (from line 3 to the first non-comment line).
 usage() {
-  sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//'
+  awk 'NR < 3 {next} /^#/ {sub(/^# ?/, ""); print; next} {exit}' "$0"
   exit "${1:-0}"
 }
 
@@ -40,7 +49,7 @@ while [[ $# -gt 0 ]]; do
     -d|--dir)     SRC_DIR="$2"; shift 2 ;;
     -t|--title)   TITLE="$2"; shift 2 ;;
     -s|--summary) SUMMARY="$2"; shift 2 ;;
-    -D|--date)    DATE="$2"; shift 2 ;;
+    -D|--date)    DATE="$2"; DATE_EXPLICIT=1; shift 2 ;;
     -h|--help)    usage 0 ;;
     -*)           echo "Unknown option: $1" >&2; usage 1 ;;
     *)            if [[ -z "$SLUG" ]]; then SLUG="$1"; else echo "Too many args" >&2; usage 1; fi; shift ;;
@@ -102,6 +111,36 @@ EXISTING_DE=$(find_existing_post "content/aktuelles")
 EXISTING_EN=$(find_existing_post "content/en/aktuelles")
 EXISTING_ES=$(find_existing_post "content/es/aktuelles")
 
+EXISTING_ANY="${EXISTING_DE:-${EXISTING_EN:-$EXISTING_ES}}"
+YEAR="${DATE%%-*}"
+
+# Refuse ambiguous slugs before anything is written to disk. Without this the
+# script would silently switch to enrich mode: inherit the old post's date,
+# title and photos, then report "nothing to do" on what the caller meant as a
+# new post.
+if [[ -n "$EXISTING_ANY" ]]; then
+  existing_date=$(filename_date "$EXISTING_ANY")
+  if [[ $DATE_EXPLICIT -eq 1 && "$existing_date" != "$DATE" ]]; then
+    echo "Error: slug '${SLUG}' already belongs to ${EXISTING_ANY} (dated ${existing_date})." >&2
+    echo "       Recurring events carry the year: try '${SLUG}-${YEAR}'." >&2
+    echo "       To edit that existing post instead, re-run without -D." >&2
+    exit 1
+  fi
+  echo "→ Enriching existing post ${EXISTING_ANY} (dated ${existing_date})"
+else
+  # No post owns the bare slug, but year-scoped siblings mean this is an
+  # event family. A bare slug would break the family's naming.
+  shopt -s nullglob
+  SIBLINGS=(content/aktuelles/*-"${SLUG}"-[0-9][0-9][0-9][0-9].md)
+  shopt -u nullglob
+  if [[ ${#SIBLINGS[@]} -gt 0 ]]; then
+    echo "Error: '${SLUG}' is a recurring event, its posts carry the year:" >&2
+    printf '         %s\n' "${SIBLINGS[@]}" >&2
+    echo "       Use '${SLUG}-${YEAR}'." >&2
+    exit 1
+  fi
+fi
+
 POST_DE="${EXISTING_DE:-content/aktuelles/${DATE}-${SLUG}.md}"
 POST_EN="${EXISTING_EN:-content/en/aktuelles/${DATE}-${SLUG}.md}"
 POST_ES="${EXISTING_ES:-content/es/aktuelles/${DATE}-${SLUG}.md}"
@@ -149,6 +188,15 @@ if [[ ${#EXISTING_OPTIMIZED[@]} -gt 0 ]]; then
   done
   IMAGES_REUSED=1
   echo "→ Reusing ${#OPTIMIZED_NAMES[@]} existing optimized image(s) in $IMG_DIR/"
+  if [[ -d "$SRC_DIR" ]]; then
+    shopt -s nullglob nocaseglob
+    ignored_src=("$SRC_DIR"/*.{jpg,jpeg,png,heic})
+    shopt -u nocaseglob
+    shopt -u nullglob
+    if [[ ${#ignored_src[@]} -gt 0 ]]; then
+      echo "  ${#ignored_src[@]} image(s) in $SRC_DIR are ignored. Delete $IMG_DIR/ to re-import them."
+    fi
+  fi
 else
   if [[ ! -d "$SRC_DIR" ]]; then
     echo "Error: source dir '$SRC_DIR' does not exist and no existing images in $IMG_DIR/" >&2

@@ -9,7 +9,7 @@ Scaffold a new post under `content/aktuelles/` (DE), `content/en/aktuelles/` (EN
 
 ## Inputs to ask for if not provided
 
-- Slug (kebab-case)
+- Slug (kebab-case). Recurring events carry the year: `pfingstmontag-2027`, not `pfingstmontag`.
 - Title (defaults to humanized slug)
 - Summary / description (frontmatter + fallback body)
 - Date (defaults to today)
@@ -57,6 +57,7 @@ Village association website. Plain, direct, warm, German-native. Not marketing c
 ## Conventions
 
 - Filenames `YYYY-MM-DD-<slug>.md`. Zola derives `page.date` from the filename, so frontmatter has no `date` field.
+- A slug belongs to exactly one post. Recurring events (Pfingstmontag, Mühlentag, Weihnachten, Konzerte) carry the year as a suffix from the first occurrence on: `pfingstmontag-2027`, `weihnachten-2027`. One-off news posts do not. `new-post.sh` refuses a slug another post owns, and refuses a bare slug when year-scoped siblings exist.
 - Frontmatter requires `title`, `description`, `template = "blog-post.html"`, `[extra] image`.
 - Every post needs a matching thumbnail in `static/imgs/thumbs/<basename>.jpg` (the script generates it).
 
