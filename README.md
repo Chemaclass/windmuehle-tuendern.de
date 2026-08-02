@@ -44,10 +44,12 @@ The site is trilingual: German (`/`), English (`/en/`) and Spanish (`/es/`). Eve
 
 ```bash
 zola build
+./scripts/check-links.py
 ./start-local.sh
 ```
 
-Run `zola build` before committing.
+Run both before committing. `zola build` checks templates and frontmatter; it
+resolves no link and no image path, so a green build says nothing about them.
 
 ### Create an Aktuelles Post
 
@@ -81,7 +83,7 @@ After scaffolding:
 3. Group gallery images with `<div class="post-images">`.
 4. Keep `[extra] image` set to an existing image in `static/imgs/`.
 5. Ensure `static/imgs/thumbs/<image>.jpg` exists for the selected hero image.
-6. Run `zola build`.
+6. Run `zola build`, then `./scripts/check-links.py`.
 
 To swap a post hero image and regenerate thumbnails:
 
@@ -137,6 +139,7 @@ zola build
 | `scripts/new-tour.sh` | Append a guided tour slot |
 | `scripts/validate-fuehrungen.py` | Validate `data/fuehrungen.toml` |
 | `scripts/check-i18n.py` | Check translation parity |
+| `scripts/check-links.py` | Resolve every link and image in `public/` (run after `zola build`) |
 | `scripts/mark-for-translation.sh` | Mark Markdown files in a directory for translation |
 
 ## Testing
@@ -155,7 +158,8 @@ Add or update tests when changing script behavior.
 - Preserve matching translation key order in `config.toml`.
 - Use conventional commit messages.
 - Edit AI assistant config under `.agents/`, never the `.claude/` or root symlinks.
-- Run `zola build` before committing.
+- Run `zola build` and `./scripts/check-links.py` before committing.
+- One slug per post: recurring events carry the year (`pfingstmontag-2027`).
 
 ## AI Assistant Config
 

@@ -8,7 +8,13 @@ from pathlib import Path
 try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:
-    import tomli as tomllib  # type: ignore
+    try:
+        import tomli as tomllib  # type: ignore
+    except ModuleNotFoundError:
+        sys.exit(
+            "validate-fuehrungen.py needs Python 3.11+ or the tomli package.\n"
+            "Run ./scripts/setup.sh to install it."
+        )
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "fuehrungen.toml"

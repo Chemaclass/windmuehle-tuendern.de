@@ -242,11 +242,10 @@ function test_rerun_creates_only_missing_language_posts() {
   assert_same "$de_before" "$de_after"
 }
 
-function test_rerun_inherits_frontmatter_from_existing_de() {
-  # Seed DE with a handcrafted post; re-run should use its title/description,
-  # extra.image, and date (from filename) when creating EN/ES stubs.
+function seed_de_post() {
+  # $1 = filename date. Handcrafted DE post used by the enrich/guard tests.
   mkdir -p content/aktuelles
-  cat > "content/aktuelles/2026-04-17-my-slug.md" <<'EOF'
+  cat > "content/aktuelles/${1}-my-slug.md" <<'EOF'
 +++
 title = "Handgepflegter Titel"
 description = "Handgepflegte Beschreibung"
@@ -258,14 +257,73 @@ image = "/imgs/my-slug/my-slug-03.jpg"
 
 body
 EOF
+}
 
-  "$SCRIPT" my-slug -D 2026-05-10 >/dev/null
+function test_rerun_inherits_frontmatter_from_existing_de() {
+  # Without -D the run enriches the existing post: EN/ES stubs take its
+  # title/description, extra.image and date (from the filename).
+  seed_de_post 2026-04-17
+
+  "$SCRIPT" my-slug >/dev/null
 
   en=$(cat "content/en/aktuelles/2026-04-17-my-slug.md")
   assert_contains 'title = "Handgepflegter Titel"' "$en"
   assert_contains 'description = "Handgepflegte Beschreibung"' "$en"
   assert_contains 'image = "/imgs/my-slug/my-slug-03.jpg"' "$en"
   assert_file_exists "content/es/aktuelles/2026-04-17-my-slug.md"
+}
+
+function test_enrich_run_names_the_post_it_edits() {
+  seed_de_post 2026-04-17
+
+  output=$("$SCRIPT" my-slug 2>&1)
+
+  assert_contains "Enriching existing post" "$output"
+  assert_contains "2026-04-17-my-slug.md" "$output"
+}
+
+function test_fails_when_date_conflicts_with_slug_owner() {
+  # A slug belongs to one post. Asking for another date means a new post,
+  # which silently became an enrich run before this guard existed.
+  seed_de_post 2026-04-17
+
+  output=$("$SCRIPT" my-slug -D 2027-05-10 2>&1) && status=0 || status=$?
+
+  assert_not_equals "0" "$status"
+  assert_contains "already belongs" "$output"
+  assert_contains "my-slug-2027" "$output"
+}
+
+function test_same_date_for_slug_owner_still_enriches() {
+  seed_de_post 2026-04-17
+
+  output=$("$SCRIPT" my-slug -D 2026-04-17 2>&1) && status=0 || status=$?
+
+  assert_equals "0" "$status"
+  assert_file_exists "content/en/aktuelles/2026-04-17-my-slug.md"
+}
+
+function test_fails_when_year_scoped_siblings_exist() {
+  # The bare slug is free, but the event family already carries years.
+  seed_de_post 2025-06-09
+  mv "content/aktuelles/2025-06-09-my-slug.md" \
+     "content/aktuelles/2025-06-09-my-slug-2025.md"
+
+  output=$("$SCRIPT" my-slug -D 2027-06-01 2>&1) && status=0 || status=$?
+
+  assert_not_equals "0" "$status"
+  assert_contains "recurring event" "$output"
+  assert_contains "my-slug-2027" "$output"
+}
+
+function test_rejected_slug_writes_nothing() {
+  seed_de_post 2026-04-17
+
+  "$SCRIPT" my-slug -D 2027-05-10 >/dev/null 2>&1 || true
+
+  assert_file_not_exists "content/aktuelles/2027-05-10-my-slug.md"
+  assert_file_not_exists "content/en/aktuelles/2026-04-17-my-slug.md"
+  assert_directory_not_exists "static/imgs/my-slug"
 }
 
 function test_rerun_reuses_existing_optimized_images_without_source_dir() {
