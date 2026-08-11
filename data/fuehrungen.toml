@@ -81,3 +81,17 @@ title = "Benefizkonzert Frauenchor Tündern"
 location = "St. Christophorus-Kirche in Tündern"
 free_entry = true
 link = "/aktuelles/benefizkonzert-frauenchor/"
+
+[[slots]]
+date = "2026-08-28"
+time = "09:00"
+kind = "private"
+status = "booked"
+guide = "Falk"
+
+[[slots]]
+date = "2026-08-28"
+time = "10:00"
+kind = "private"
+status = "booked"
+guide = "Falk"
