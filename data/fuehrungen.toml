@@ -95,3 +95,10 @@ time = "10:00"
 kind = "private"
 status = "booked"
 guide = "Falk"
+
+[[slots]]
+date = "2026-09-20"
+time = "14:00"
+kind = "private"
+status = "booked"
+guide = "Dirk"
